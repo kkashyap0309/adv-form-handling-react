@@ -1,4 +1,32 @@
+import { useContext } from "react";
+import { OpinionsContext } from "../store/opinions-context";
+import { useActionState } from "react";
+
 export function Opinion({ opinion: { id, title, body, userName, votes } }) {
+  const { upvoteOpinion, downvoteOpinion } = useContext(OpinionsContext);
+
+  // we want to disable the upvote and downvote button untill the the vote values get updated
+  // we will be disableing both upvote and downvote button when voting for the opinion
+  const [upvoteFormState, upvoteFormAction, upvotePending] = useActionState(
+    upVoteAction,
+    null
+  );
+  const [downvoteFormState, downvoteFormAction, downvotePending] =
+    useActionState(upVoteAction, null);
+
+  //just like the formaction we set to the form level. the formAction can also be set to the other tag level
+  // in order to submit action  to different different url. Eg below we have scenario to call different url when
+  // doing upvote against any opinion and likewise dwonvote against any opinion
+  async function upVoteAction() {
+    console.log("Upvoting...");
+    await upvoteOpinion(id);
+  }
+
+  async function downVoteAction() {
+    console.log("downvoting...");
+    await downvoteOpinion(id);
+  }
+
   return (
     <article>
       <header>
@@ -7,11 +35,14 @@ export function Opinion({ opinion: { id, title, body, userName, votes } }) {
       </header>
       <p>{body}</p>
       <form className="votes">
-        <button>
+        <button
+          formAction={upvoteFormAction}
+          disabled={upvotePending || downvotePending}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="30"
+            height="30"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -27,11 +58,14 @@ export function Opinion({ opinion: { id, title, body, userName, votes } }) {
 
         <span>{votes}</span>
 
-        <button>
+        <button
+          formAction={downvoteFormAction}
+          disabled={upvotePending || downvotePending}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="30"
+            height="30"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
