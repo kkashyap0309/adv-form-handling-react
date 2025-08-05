@@ -1,9 +1,19 @@
 import { useContext } from "react";
 import { OpinionsContext } from "../store/opinions-context";
 import { useActionState } from "react";
+import { useOptimistic } from "react";
 
 export function Opinion({ opinion: { id, title, body, userName, votes } }) {
   const { upvoteOpinion, downvoteOpinion } = useContext(OpinionsContext);
+
+  //useOptimistic hook is customhook provided by react to show the result instantly if there is any value
+  // which is getting updated after the async call
+  const [votesOptimistic, setVoteOptimistically] = useOptimistic(
+    votes,
+    (prevVote, mode) => {
+      return mode === "up" ? prevVote + 1 : prevVote - 1;
+    }
+  );
 
   // we want to disable the upvote and downvote button untill the the vote values get updated
   // we will be disableing both upvote and downvote button when voting for the opinion
@@ -12,18 +22,23 @@ export function Opinion({ opinion: { id, title, body, userName, votes } }) {
     null
   );
   const [downvoteFormState, downvoteFormAction, downvotePending] =
-    useActionState(upVoteAction, null);
+    useActionState(downVoteAction, null);
 
   //just like the formaction we set to the form level. the formAction can also be set to the other tag level
   // in order to submit action  to different different url. Eg below we have scenario to call different url when
   // doing upvote against any opinion and likewise dwonvote against any opinion
   async function upVoteAction() {
     console.log("Upvoting...");
+    // this will instantly increase the opinion vote count but the call will still be async and the 
+    // prevVote value will we updated with new. If there is any error during the async call the value will be 
+    // rollback to its last value which was before updating. 
+    setVoteOptimistically("up"); 
     await upvoteOpinion(id);
   }
 
   async function downVoteAction() {
     console.log("downvoting...");
+    setVoteOptimistically("down");
     await downvoteOpinion(id);
   }
 
@@ -56,7 +71,7 @@ export function Opinion({ opinion: { id, title, body, userName, votes } }) {
           </svg>
         </button>
 
-        <span>{votes}</span>
+        <span>{votesOptimistic}</span>
 
         <button
           formAction={downvoteFormAction}
